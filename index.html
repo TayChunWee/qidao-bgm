@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>栖岛 · 背景音乐试听</title>
+<style>
+  :root { --bg: #f6f1e6; --card: #fffdf7; --ink: #4a4136; --soft: #8c8172; --line: #e6dccb; --accent: #e07a5f; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 28px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .lead { color: var(--soft); margin: 0 0 20px; }
+  .track { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+  .track.playing { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(224, 122, 95, .18); }
+  .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .num { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .name { font-weight: 700; font-size: 16px; }
+  .len { color: var(--soft); font-variant-numeric: tabular-nums; margin-left: auto; }
+  .meta { color: var(--soft); font-size: 13px; margin: 2px 0 10px; }
+  .meta a { color: inherit; }
+  audio { width: 100%; height: 40px; display: block; }
+  .extra { margin-top: 8px; font-size: 13px; color: var(--soft); }
+  .extra audio { margin-top: 4px; }
+  footer { color: var(--soft); font-size: 13px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>栖岛 · 背景音乐试听</h1>
+  <p class="lead">《栖岛》是一个慢慢盖小岛的休闲游戏，正在挑背景音乐。下面是十首备选，麻烦听一听，告诉我你最喜欢哪几首的编号。点播放键试听，开始播一首时其他的会自动停下。</p>
+  <div id="list"></div>
+  <footer>十首都是作者以 CC0 方式公开的作品（放弃全部权利，可自由使用），每首都附了来源页面。</footer>
+</main>
+<script>
+  const TRACKS = [
+    { name: 'Ocean Breeze', by: 'HoliznaCC0', len: '3:18', style: '尤克里里，低保真，平和', file: '01-ocean-breeze.mp3',
+      src: 'https://freemusicarchive.org/music/holiznacc0/public-domain-lofi/ocean-breeze-lofi-ukulele-peaceful-mp3/' },
+    { name: 'Calm Currents', by: 'HoliznaCC0', len: '2:28', style: '低保真，放松，平静', file: '02-calm-currents.mp3',
+      src: 'https://freemusicarchive.org/music/holiznacc0/public-domain-lofi/calm-currents-lofi-relax-calm' },
+    { name: 'Tokyo Sunset', by: 'HoliznaCC0', len: '2:19', style: '低保真，平和，柔和', file: '03-tokyo-sunset.mp3',
+      src: 'https://freemusicarchive.org/music/holiznacc0/public-domain-lofi/tokyo-sunset-lofi-peaceful-soft/' },
+    { name: 'Infinite Echoes', by: 'HoliznaCC0', len: '2:20', style: '低保真，梦幻，柔和', file: '04-infinite-echoes.mp3',
+      src: 'https://freemusicarchive.org/music/holiznacc0/public-domain-lofi/infinite-echoes-lofi-dreamy-soft/' },
+    { name: 'A cup of tea', by: 'TAD', len: '2:49', style: '钢琴加节拍，放松', file: '05-a-cup-of-tea.mp3',
+      src: 'https://opengameart.org/content/lofi-compilation' },
+    { name: 'Bartender', by: 'TAD', len: '4:07', style: '钢琴加节拍，放松', file: '06-bartender.mp3',
+      src: 'https://opengameart.org/content/lofi-compilation' },
+    { name: 'Bluebonnet', by: 'Kistol', len: '2:07', style: '钢琴独奏，柔和、轻快', file: '07-bluebonnet.mp3',
+      src: 'https://opengameart.org/content/bluebonnet',
+      extra: { label: '同一首的可循环版本（1:49）', file: '07-bluebonnet-loop.mp3' } },
+    { name: 'Sunset Plains', by: 'Yoiyami', len: '5:30', style: '新世纪风，木吉他加铺底，温暖平和', file: '08-sunset-plains.mp3',
+      src: 'https://opengameart.org/content/sunset-plains' },
+    { name: 'Apple Cider', by: 'Zane Little Music', len: '3:20', style: '复古游戏机音色，温馨可爱', file: '09-apple-cider.mp3',
+      src: 'https://opengameart.org/content/apple-cider' },
+    { name: 'Sleepy Little Mouse（不带鼓的版本）', by: 'Tsorthan Grove', len: '2:54', style: '低保真加氛围感', file: '10-sleepy-little-mouse-no-drums.mp3',
+      src: 'https://opengameart.org/content/sleepy-little-mouse' },
+  ];
+
+  const list = document.getElementById('list');
+  const players = [];
+  const makeAudio = (file) => {
+    const a = document.createElement('audio');
+    a.controls = true;
+    a.preload = 'none';
+    a.src = file;
+    players.push(a);
+    return a;
+  };
+
+  TRACKS.forEach((t, i) => {
+    const card = document.createElement('section');
+    card.className = 'track';
+    const head = document.createElement('div');
+    head.className = 'head';
+    head.innerHTML = `<span class="num">${String(i + 1).padStart(2, '0')}</span><span class="name"></span><span class="len">${t.len}</span>`;
+    head.querySelector('.name').textContent = t.name;
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = `<span></span> · <a target="_blank" rel="noopener">来源页面</a>`;
+    meta.querySelector('span').textContent = `${t.by} · ${t.style}`;
+    meta.querySelector('a').href = t.src;
+    card.append(head, meta, makeAudio(t.file));
+    if (t.extra) {
+      const extra = document.createElement('div');
+      extra.className = 'extra';
+      extra.textContent = t.extra.label;
+      extra.append(makeAudio(t.extra.file));
+      card.append(extra);
+    }
+    list.append(card);
+  });
+
+  // 同一时间只放一首
+  players.forEach((a) => {
+    a.addEventListener('play', () => {
+      players.forEach((b) => { if (b !== a) b.pause(); });
+      document.querySelectorAll('.track').forEach((c) => c.classList.toggle('playing', c.contains(a)));
+    });
+    a.addEventListener('pause', () => {
+      if (players.every((b) => b.paused)) document.querySelectorAll('.track').forEach((c) => c.classList.remove('playing'));
+    });
+  });
+</script>
+</body>
+</html>
